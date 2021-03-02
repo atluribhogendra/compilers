@@ -1,0 +1,72 @@
+expresision = term
+expression = expression + term or expression - term or expression * term or expression / term
+A
+term = factor
+term = term * factor or term / factor
+A
+factor = non negative integer
+A
+factor = - factor for unary 
+
+
+Operators Associativity
+() (Grouping) N/A
++, - (Unary) N/A
+^ right
+*, /, mod left
++, - (Addition and subtraction) left
+==================================
+
+expresision = term
+expression = expression + term or expression - term or expression * term or expression / term
+A
+term = factor
+term = term * factor or term / factor
+A
+factor = non negative integer
+A
+factor = - factor for unary 
+==============================
+
+expression -> experession binOp expression | unaryOp expression | (expression)
+expression -> variable | numberic_literal
+
++
+
+a + b + c
+
+
+binOp -> + | - | ^ | * | / | mod | 
+unaryOp -> +, -
+=====================================================
+
+Expression - > Term SecondPart
+SecondPart -> e | + Expression
+Term -> variable | literal
+
+expression()
+  if !Term() then false
+  if !SecondPart then false
+
+SecondPart
+  if token = +
+      if Expression
+       return true
+       
+  else
+    if end of input
+      return true
+  return faale
+
+Term()
+  if variable return true
+  if literal() return true
+  return false
+
+variable()
+  if token == 
+
+literal()
+  if token == literal
+
+==================================================
