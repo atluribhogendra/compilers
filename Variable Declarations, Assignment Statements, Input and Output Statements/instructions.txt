@@ -1,0 +1,268 @@
+Compile and execute variable declarations, assignment statements and basic I/O.
+Program
+You should write a driver program that takes a text file as a command line argument and then processes it using your compiler. 
+The compiler should parse the input for a sequence of statements and generate a code tree representing that expression. 
+The code tree is then used to generate machine code instructions to be executed later.
+
+Statements
+One of the main additions to the compiler is the processing of statements. 
+These should be grouped into statement sequences.
+
+Your parser should have rules (routines) for parsing statement sequences and generic statements. 
+For now, the statement sequence routine should parse as long as there is input. 
+The generic statement routine should be able to determine, from the current token, what type of statement is to be parsed. 
+This is usually done through the recognition of keywords. 
+Anything else should be an identifier representing the start of an assignment statement (or function call, but that's a different project).
+
+Statements are often terminated with semicolons. This is not generally true. 
+However, all of the statements implemented in this assignment should be terminated with semicolons. 
+It's often better to process the semicolon with each statement rather than do catch-all semicolon handling after any type of statement.
+
+
+The statements that should be handled in this assignment are print(), read(), variable declaration statements for int4 data types, and assignment statements.
+Expressions
+Arithmetic expressions will be expanded into something much larger, which for lack of a more descriptive term, will just be called expressions. 
+The parsing for an expression will ultimately go through logical expressions, into relative expressions, and then into arithmetic expressions. 
+For now, your expression parsing routine should call your arithmetic expression parsing routine. Relational and logical expressions will be added later.
+
+An important change to your code tree creation is that each node involved in an expression should have a value type associated with it. 
+One way to think of this value type is the type "returned" from a particular operation. 
+For example, if an addition node has two children who each have a value type of int4, then the resulting value type for the addition should also be an int4.
+
+
+For this assignment there should be three node value types: a null type, a int4 type, and a string constant type.
+
+At the very end of the arithmetic expression parsing, where integer constants are parsed, you should make changes to handle string constants as well. 
+The value type of the node generated will be a string constant.
+The node generated should contain either the value of the string constant or a reference of some kind to the location where the value is located. 
+(See string table, below.)
+
+Strings
+There are two basic ways to implement strings. Both use arrays of characters. 
+One terminates the array with a special value, often a zero byte. 
+The other keeps track of the number of characters used in the array. We will use the null terminated character approach.
+
+Your compiler should have a string table associated with the compiled program at run-time. 
+This table should contain all of the string constants discovered by the parser during the compilation stage. 
+The string table should be created and initialized when the compiler starts. 
+The values in the table can be inserted either during the creation of the code tree or at machine code generation time.
+There are no particular advantages of one approach over the other.
+
+
+Helper Functions
+You will need some helper functions, written in C/C++ to avoid a lot of the headaches associated with I/O.
+ These routines will be called by the generated machine code as needed. These are
+
+    A routine that should take a single four byte integer and print it to the standard output. There should be no return type.
+    A routine that should take a character pointer and print it to the standard output as a null terminated string. There should be no return type.
+    A routine that takes no input and returns a 4 byte integer. The value should be read from the standard input.
+
+In addition, if you don't already have them, you should create functions that
+
+    Take a four byte integer and append it to the end of the program array as four bytes in little-endian order
+    The same thing, but for eight byte integers. This will be useful for placing pointers in the program code.
+
+Print
+The print statement has the following syntax:
+
+print ( expr, expr, ... ) ;
+
+, i.e., a comma separated list of expressions. The code tree node for this statement should have children for each of the expressions.
+ The code generation for this statement consists of generating code for each expression in turn and 
+ then calling the appropriate helper function according to the value type of the expression.
+ 
+ 
+Read
+The read statement has the following syntax:
+
+read ( variable ) ;
+
+The statement only has a single operand (or argument). The code tree node for this statement may have 0 or 1 children depending on how you want to store the variable reference. Pick an approach and use it consistently.
+
+The code generation for this statement consists of calling the appropriate helper function and then moving the resulting value into the storage location associated with the variable. Currently, only 4 byte integers can be read.
+Assignment
+The assignment statement has the following syntax:
+
+variable <- expr ;
+
+The code tree node for this statement should have two children, one for the variable, and one for the expression. The code generation for this statement consists of generating the code for the expression and then taking the resulting value and storing it in the location associated with the variable, which can be found in the symbol table (see below).
+Variables and Declarations
+Currently only int4 variables can be declared. The declaration statement has the following syntax:
+
+int4 variable_name ;
+
+An entry in the symbol table should be created for each variable if one does not already exist. If an entry does exist, then a duplicate variable error should be returned. The entry should be created by the code tree generation routine at the time that the declaration statement is processed. It is not necessary to create the storage for the variable during code tree processing, but can be done if desired.
+
+In expressions, when encountering a variable name, the symbol table should be checked. If the name does not exist in the symbol table, then an undeclared variable, or non-existant symbol error should be returned.
+
+In variable declaration, it is tempting to not generate a code tree node. However, one is needed. The code generation for this statement consists of creating storage for the integer if it has not already been done during the code tree stage. Then, (and this is the real reason for the node), generate code to set the variable to have an initial value of 0.
+
+Symbol Table
+A symbol table keeps track of every symbol used in the program and any information needed to assist in the implementation of that symbol.
+
+A symbol should have a name and a symbol type. 
+For this assignment, the type should be either a null type or a variable type. Future types include that of function.
+
+Each symbol should also contain information about the location of the symbol.
+As this could take place in several different ways, each symbol should have a location type. 
+These types includes memory, register, and stack.
+The symbol should also contain additional information needed to support the location type, i.e. memory address, or register label, or stack offset, etc. 
+The symbol should also contain information about the type associated with the symbol.
+
+There should be two routines associated with the symbol table. 
+One is for searching for a symbol by name and symbol type. 
+The other is for inserting a symbol into the symbol table.
+Both routines should return somehow a location to the symbol in question, either the one found (or not) or the one inserted.
+
+NOTE: Be careful as to how the location of the symbol is returned and how the symbol table is implemented.
+For example, it would be really easy to push the symbols into a C++ vector and return an address to each symbol as it is pushed into the symbol table.
+Unfortunately, as the vector automatically resizes itself it creates larger storage and copies old values into the new array. 
+Pointers to symbols in the old array will then no longer be valid.
+
+Possible solutions involve fixed size symbol tables or locations that don't involve pointers. poi
+
+Integer Storage
+You should create storage for the integer variables referenced in the symbol table.
+This can be done at the time the symbol is created, or later in code generation.
+The memory for the variables can be created dynamically, variable by variable or as an offset into a larger block of memory specifically for variables.
+For what it's worth, the latter approach more closely mirrors what typically happens in practice.
+
+Code Tree
+You should have a node type for a statement sequence. The children of this node will be the individual statements.
+
+It is tempting to have a node type for a generic statement, but this is not needed.
+
+You should have node types for the various statement types: print, read, assignment, and variable declaration.
+Implementation Hints
+Implement the print() statement first. Then work on variable declaration. Then assignment or read()
+
+
+
+
+=========================================================================================
+
+
+Compile and execute relational expressions, logical expressions, if/else statements, multiple statement bodies, and while loops.
+
+Program
+
+You should write a driver program that takes a text file as a command line argument 
+and then processes it using your compiler. 
+The compiler should parse the input for a sequence of statements and generate a code tree representing that expression. 
+
+The code tree is then used to generate machine code instructions to be executed later.
+
+Logical Values
+
+Your compiler should recognize the keywords "true" and "false". 
+Hint1: These should be recognized at the lowest level of the expression parser, along with integer constants, string constants, and variables.
+ Hint2: Since the token type for these keywords is an identifier, the test for these keywords will need to take place before variables are recognized.
+ 
+ 
+
+You should have a new code tree node type for logical (boolean) constants. 
+There should be storage in the node for the value (true or false), 
+just like you have internal storage for integer constants. 
+The result type of the constant expression should be a boolean type.
+Your nodes should be able to handle boolean return values as well as the int4 and string values they currently handle.
+
+The code generation for the print() function should be modified to handle boolean values as well.
+
+A boolean variable type for the language will NOT be implemented at this time.
+
+Implementation
+
+The code generation for these constants should simply place a 1 or 0 into the accumulator for true and false respectively. Hint: Immediate values are not needed.
+
+Relative Expressions
+
+These are the six standard operators for comparing numeric values: <, <=, >, >=, =, ~=. Only comparisons of int4 expressions need be implemented.
+
+The arithmetic operators took two int4 values and returned a int4 value. The relative operators take two int4 values and return a logical value. If the types of the operands are not both int4s, then an error should occur.
+
+With respect to the expression processing hierarchy, relative expressions are higher than arithmetic expressions. So parsing these operators will involve parsing an arithmetic expression, and then, if appropriate, the relative operator and another arithmetic expression. This means that it's entirely possible that a relative expression may return the value of an arithmetic expression if there are no following relational operators.
+
+The relational operators all have the same precedence level.
+
+Implementation
+
+In a machine with 32 bit registers, there is a purity to representing true as a 32 bit "1", and false as a 32 bit "0". And logical values stored naturally in 32 bit memory locations should likely be represented this way. However, for the comparisons and testing needed in the code, this often means 32 bit immediate values in the code, which is inefficient.
+
+In the Intel architecture, much can be done by dealing only with the lower 8 bits of the register. Immediate values, when needed, can be stored in a single byte.
+
+Rather than push the result of the operator back on to the stack, the convention will be "the result can be found as a 0 or 1 value in the AL register".
+
+The machine code generation for each operator is roughly the same: 1) generate the machine code for the left hand arithmetic expression. 2) If it has not already been done, this value should be pushed on to the stack. 3) generate the machine code for the right hand arithmetic expression. The value should be placed in a register. 4) The previously stored left hand value should be restored from the stack into a different register. 5) The CMP instruction should be issued to compare the two registers. The flags will be set appropriately as a result of this instruction, but the registers themselves will not be changed. 6) The appropriate SETcc instruction should be issued to set the AL register to 0 or 1 depending on the result of the comparison. This final instruction is the only difference between the implementations of all the relational operators.
+
+Logical Expressions
+
+There are three standard operators for comparing logical values: or (|), and (&), and not (!). These operators all take logical values as operands and return a logical value.
+ This implies that the operators can be placed in sequence, e.g. a | b | c, or a & b & c.
+
+With respect to the expression processing hierarchy, logical expressions are higher than relative expressions. 
+However, the logical operators have their own internal precedence. Logical not has precedence over logical and, which has precedence over logical or. Short-circuit Evaluation
+As discussed in class, short-circuit evaluation of binary logical operators means that instead of evaluating both operands before performing the logical operation, 
+the first operand is evaluated and then based on the value, it is determined whether or not the second operand should be evaluated.
+
+An important point to make is that when the first operand is evaluated, its value alone may determine the result of the operator (this is the short-circuit).
+Equally important is the fact that when the second operand must be evaluated, its value alone will determine the result of the operator.
+Consequently, the operator itself will not need to be evaluated. This is more important than it sounds.
+
+Some examples will help. In evaluating expr1 | expr2, if expr1 is true, then the result of the or operator is true, regardless of the value of expr2. But if expr1 is false, then the result of the or operator is true if and only if expr2 is true. The or operator itself does not actually need to be evaluated.
+
+Likewise, In evaluating expr1 & expr2, if expr1 is false, then the result of the and operator is false, regardless of the value of expr2. But if expr1 is true, then the result of the and operator is true if and only if expr2 is true. The and operator itself does not actually need to be evaluated.
+Implementation
+The need to evaluate sequences of logical operators, along with their precedence adds some additional challenges to the parsing. 
+However, the structure of this parsing is almost identical to some of the arithmetic parsing that has already been implemented.
+
+Parsing addition sequences leads to calling the parsing for multiplication sequences, which ultimately leads to calling the parsing for arithmetic negation.
+
+In a like fashion, parsing or sequences leads to calling the parsing for and sequences, which leads to calling the parsing for logical negation. 
+The structure for parsing or sequences is similar to that for parsing addition sequences. 
+The structure for parsing and sequences is similar to that for parsing multiplication sequences.
+The structure for parsing logical negation is similar to parsing arithmetic negation. 
+The parsing routine for logical negation should call the routine for parsing relative expressions.
+
+Short-circuit Evaluation
+Although it seems more advanced, short circuit evaluation for ands and ors turns out to be easier to code.
+
+1)Generate the code for evaluating the left hand operand. The result of the operand is in the AL register.
+2) Generate a TST instruction, comparing the AL register with 1. Because only the AL register is being used, an 8-bit immediate operand for the TST is sufficient.
+3) Depending on which operator is being implemented, generate a JE(JZ) or JNE(JNZ) instruction. The jump should be over the code of the second operand, yet to be generated. 4) Generate the code for evaluating the right hand operand, which should leave its result in the AL register. 5) Finalize the jump offset as needed.
+
+For simplicity, you may assume that the jumps will all be 32 bit jumps.
+
+Logical negations can be implemented using an XOR instruction.
+
+Decisions
+The syntax for decisions is the keyword if followed by a logical expression inside of parentheses. 
+This is followed by the body of the decision. 
+This can then be followed by an optional else statement, which is also followd by its own decision body.
+
+The code tree node for a decision may have two or three children. The first child is the logical expression. The second child is the body of the decision. The third child is the body of the else clause, if it exists.
+Decision Bodies
+The bodies of the decisions can come in one of two forms, either as a single statement or as a statement block. Statement blocks are simply sequences of statements enclosed in curly braces. After parsing the expression (including parentheses) of an if statement, the value of the current token (left curly brace or not) will indicate whether a statement or a statement block should be parsed. The same logic works for the body of the else statement.
+
+The parsing of the if statement as described naturally enables the structure of if()...else if()...else if()...else. You will not need to do anything additional to take advantage of this structure.
+Implementation
+The machine code generation of the decision is slightly different, depending on whether or not there is an else clause.
+
+If there is no else, then 1)Generate the code for the expression. 2)Generate an appropriate TST instruction. 3) Generate a conditional jump. The jump should happen if the result of the expression is false. 4) Generate the code for the decision body. 5) Adjust the jump in 3) to jump over the code of 4).
+
+If the decision has an else, then much of the generation is as above, but with subtle differences. 1) Generate the code for the expression. 2) Generate the appropriate TST instruction. 3) Generate a conditional jump. The jump should happen if the result of the expression is false. 4) Generate the code for the decision body. 5) Generate a nonconditional jump. This is to jump over the body of the elseclause. 6) Adjust the jump in 3) to jump over the code of both 4) and 5). 7) Generate the code for the else clause. 8) Adjust the jump of 5) to jump over the code of 7).
+
+Again, for simplicity, you may assume that all jumps are 32 bit relative jumps.
+While loops
+After implementing decision statements, while loops are fairly simple. The syntax for decisions is the keyword while followed by a logical expression inside of parentheses. This is followed by the body of the loop. As with decisions, the body may a single statement, or a statement block enclosed in curly braces.
+
+The parsing of the loop body follows the same guidelines as that for the ifstatement.
+
+The code tree node for the while loop has two children. The first is the expression. The second is the body.
+Implementation
+The machine code generation of the while loop is fairly straightforward. In order to reduce the number of jumps, the loop is turned into a bottom driven loop.
+
+1) Generate a non-conditional jump to jump to the location of the decision. 2) Generate the code of the loop body. 3) Adjust the jump in 1) to jump over the code of 2). 4) Generate the code of the decision expression. 5) Generate an appropriate TST instruction. 6) Generate a conditional jump. The jump should happen if the result of the expression is true. The jump should go backward over the code of 6) 5) 4) and 2) to the start of the loop body in 2).
+
+Code Tree
+
+In addition to the node types you have previously implemented, you should add node types for a logical constant (internal value of true or false), nodes for each of the 6 relational operators, nodes for the three logical operators, a node type for if statements, and a node type for while statements. 
