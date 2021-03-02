@@ -1,0 +1,39 @@
+print("The true  value is ", true,  "\n");
+print("The false value is ", false, "\n");
+
+=====================================================
+
+int4 a;
+int4 b;
+
+a <- 3;
+b <- 4;
+
+print("Is ", a, " < ", b, "? ", a < b, "\n");
+
+a<-3;
+b<-4;
+
+=====================================================
+
+int4 a;
+int4 b;
+int4 i;
+int4 temp;
+
+a <- 1;
+b <- 1;
+i <- 1;
+
+print("Fibonacci", "\n");
+print(a);
+
+while(i < 20) {
+  temp <- a;
+  a <- a+b;
+  b <- temp;
+  
+  print(a); 
+  i <- i+1;
+}
+
